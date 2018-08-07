@@ -33,12 +33,17 @@ local dll_suffix = iswindows and "win32" or (islinux and "linux" or "osx")
 local dll_extension = iswindows and "dll" or (islinux and "so" or "dylib")
 
 local function loadfilemodule(name, file_path)
-	local value, errstr = loadfile(file_path)
-	if not value then
-		error("error loading module '" .. name .. "' from file '" .. file_path .. "':\n\t" .. errstr, 4)
+	local success, reason = loadfile(file_path)
+	if success then
+		return success
 	end
 
-	return value
+	if reason == ("cannot open " .. file_path .. ": No such file or directory") then
+		return "\n\tno file '" .. file_path .. "'"
+	end
+
+	local msg = assert(reason, "no error message?")
+	error(msg)
 end
 
 local function loadlibmodule(name, file_path, entrypoint_name, isgmodmodule)
@@ -76,6 +81,11 @@ package.loaders = {
 	-- try to fetch the pure Lua module from lua/libraries ("à la" Lua 5.1)
 	function(name)
 		return loadfilemodule(name, "libraries/" .. string.gsub(name, "%.", "/") .. ".lua")
+	end,
+
+	-- try to fetch the pure Lua module from lua/libraries/<name>/init.lua ("à la" Lua 5.1)
+	function(name)
+		return loadfilemodule(name, "libraries/" .. string.gsub(name, "%.", "/") .. "/init.lua")
 	end,
 
 	-- try to fetch the binary module from lua/bin ("à la" Garry's Mod)
