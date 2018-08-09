@@ -21,10 +21,20 @@ package.preload["jit.util"] = function() return jit.util end
 package.preload.os = function() return os end
 package.preload.package = function() return package end
 
+local last_loadlib = _G.loadlib
+local last_loadfile = _G.loadfile
+
 require("require.core")
 
-local loadlib = loadlib
-local loadfile = loadfile
+local loadlib = _G.loadlib
+local loadfile = _G.loadfile
+
+if last_loadlib then
+	_G.loadlib = last_loadlib
+end
+if last_loadfile then
+	_G.loadfile = last_loadfile
+end
 
 local iswindows = system.IsWindows()
 local islinux = system.IsLinux()
